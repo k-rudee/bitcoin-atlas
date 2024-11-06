@@ -3,6 +3,24 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Environment Variables
+.env
+
+# Keep essential sbt config in project/
+!project/build.properties
+
+# Scala build files
+target/
+project/target/
+project/project/
+
+# Spark Checkpointing
+checkpoint/
+
+# Docker build caches and logs
+*.log
+*.tmp
+
 # C extensions
 *.so
 
