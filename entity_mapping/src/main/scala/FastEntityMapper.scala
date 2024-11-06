@@ -85,18 +85,11 @@ object FastEntityMapper {
     ccMapped.write
       .format("snowflake")
       .options(snowflakeOptions)
-      .option("dbtable", "entity_mapping_2")
+      .option("dbtable", "entity_mapping_50")
       .mode("overwrite")
       .save()
 
-    // Optional: Verify the write by reading back from Snowflake
-    val verifyDF = spark.read
-      .format("snowflake")
-      .options(snowflakeOptions)
-      .option("dbtable", "entity_mapping_50")
-      .load()
-
-    verifyDF.show()
+    //verifyDF.show()
     
     // Stop Spark session
     spark.stop()
