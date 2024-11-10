@@ -39,7 +39,30 @@ class PreprocessingSettings(BaseSettings):
     pca_random_state: int = 0
 
 
+class FindClustersSettings(BaseSettings):
+    """Settings for the search of the optimal number of the clusters."""
+    n_components: tuple[int, int] = 2, 30
+    random_state: int = 0
+    verbose: bool = True
+    plot_filename: str = 'clusters_AIC_BIC_Sil.png'
+
+    @property
+    def plot_path(self) -> Path:
+        """Returns the path to the clustering plot."""
+        return module_root / ".." / self.plot_filename
+
+
+class ClusteringSettings(BaseSettings):
+    """"Clustering Settings."""
+    n_components: int = 17
+    random_state: int = 0
+
+
 class Settings(BaseSettings):
     """Application settings"""
     dataset: DatasetSettings = DatasetSettings()
     preprocessing: PreprocessingSettings = PreprocessingSettings()
+    find_clusters: FindClustersSettings = FindClustersSettings()
+    clustering: ClusteringSettings = ClusteringSettings()
+
+    find_clustering: bool = False
