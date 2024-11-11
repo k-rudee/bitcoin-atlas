@@ -21,13 +21,6 @@ if __name__ == "__main__":
         pca_random_state=settings.preprocessing.pca_random_state,
     )
 
-    print(f'PCA Components: {pca.components_}')
-    print(f'PCA Explained Variance: {pca.explained_variance_ratio_=}')
-
-    print(f'{idx.shape=}')
-    print(f'{X.shape}')
-    print(f'{X_pca.shape}')
-
     # Find the optimal number of clusters
     if settings.find_clustering:
         find_n_clusters(
@@ -49,3 +42,32 @@ if __name__ == "__main__":
         print(f'{clusters.shape=}')
         print(f'Clusters: {clusters_count[0]}')
         print(f'Cluster counts: {clusters_count[1]}')
+
+
+        # Plotly
+        import plotly.express as px
+        import pandas as pd
+
+        df = pd.DataFrame({
+            'PC1': X_pca[:, 0],
+            'PC2': X_pca[:, 1],
+            'PC3': X_pca[:, 2],
+            'Cluster': clusters
+        })
+
+        fig = px.scatter_3d(
+            df,
+            x='PC1',
+            y='PC2',
+            z='PC3',
+            color='Cluster',
+            symbol='Cluster',  # Optional: Different symbols for each cluster
+            opacity=0.8,
+            title='Interactive 3D Visualization of Clusters'
+        )
+
+        # Update marker size
+        fig.update_traces(marker=dict(size=5))
+
+        # Show the plot
+        fig.show()

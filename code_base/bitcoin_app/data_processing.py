@@ -1,8 +1,13 @@
 """Dataset normalization and PCA dimensional reduction."""
+import logging
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+from bitcoin_app.logging_config import logger_config
+
+logger = logging.getLogger(__name__)
+logger_config(logger)
 
 def data_processing(
         X: np.ndarray,
@@ -24,9 +29,13 @@ def data_processing(
     :rtype: tuple
     """
 
+    logger.info('Data preprocessing has been started.')
+
     # Normalise dataset
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
+
+    logger.info('Data scaled.')
 
     # Apply PCA
     pca = PCA(
@@ -36,5 +45,8 @@ def data_processing(
     )
 
     X = pca.fit_transform(X)
+    logger.info('PCA performed.')
+    logger.info('PCA Components: %s', pca.components_)
+    logger.info('PCA Explained Variance: %s', pca.explained_variance_ratio_)
 
     return scaler, pca, X

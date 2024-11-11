@@ -1,10 +1,14 @@
 """Load dataset."""
-
+import logging
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+from bitcoin_app.logging_config import logger_config
+
+logger = logging.getLogger(__name__)
+logger_config(logger)
 
 def load_dataset(
         path: Path,
@@ -24,11 +28,15 @@ def load_dataset(
     :rtype: tuple
     """
 
+    logger.info('Dataset loading has been started.')
+
     df = pd.read_csv(
         path,
         header=0,
         dtype=dtype,
     )
+
+    logger.info('Dataset has been loaded. DF shape: %s', df.shape)
 
     # Delete NaN values
     if drop_na:
@@ -37,7 +45,15 @@ def load_dataset(
             inplace=True,
         )
 
+        logger.info('NA values has been dropped. DF shape: %s', df.shape)
+
     # Split Dataset to indexes and other values
     idx, X = df.iloc[:, 0].values, df.iloc[:, 1:].values
+
+    logger.info(
+        'Dataset split into indexes and samples. '
+        'Index shape: %s. Samples shape: %s',
+        idx.shape, X.shape,
+    )
 
     return idx, X

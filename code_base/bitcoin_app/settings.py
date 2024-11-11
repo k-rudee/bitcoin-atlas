@@ -10,7 +10,7 @@ from bitcoin_app import module_root
 class DatasetSettings(BaseSettings):
     """Dataset Load settings"""
     dataset_folder: str = 'dataset'
-    dataset_file: str = "entity_features_small.csv"
+    dataset_file: str = 'entity_features_final.csv' # "entity_features_small.csv" entity_features_final
     drop_na: bool = True
     cols: list = [
         "ENTITY_ID", "TOTAL_RECIEVE_ADDRESSES", "TOTAL_RECIEVE_TRANSACTIONS",
@@ -65,4 +65,4 @@ class Settings(BaseSettings):
     find_clusters: FindClustersSettings = FindClustersSettings()
     clustering: ClusteringSettings = ClusteringSettings()
 
-    find_clustering: bool = False
+    find_clustering: bool = True

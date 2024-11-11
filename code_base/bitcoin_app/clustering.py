@@ -1,10 +1,66 @@
 """Clustering methods."""
+import logging
 from pathlib import Path
 
+from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
+
+from bitcoin_app.logging_config import logger_config
+
+
+logger = logging.getLogger(__name__)
+logger_config(logger)
+
+def compute_scores(
+        X: np.ndarray,
+        n_components: int,
+        random_state: int,
+        verbose: bool,
+) -> tuple[int, float, float, float]:
+    """Compute AIC, BIC, Silhouette scores  for given number of clusters.
+
+    :param X: dataset
+    :type X: numpy.ndarray
+    :param n_components: number of clusters to be tested.
+    :type n_components: int
+    :param random_state: random state for the GaussianMixture.
+    :type random_state: int
+    :param verbose: if True, the ongoing statistics will be std out.
+    :type verbose: bool
+
+    :return: number of clusters, AIC, BIC, Silhouette scores
+    """
+    if verbose:
+        logger.info(
+            'GMM for %d components started',
+            n_components
+        )
+
+    # Run GaussianMixture
+    gmm = GaussianMixture(
+        n_components=n_components,
+        random_state=random_state,
+    )
+    gmm.fit(X)
+    clusters = gmm.predict(X)
+
+    # Extract scores
+    aic = gmm.aic(X)
+    bic = gmm.bic(X)
+    sil = silhouette_score(X, clusters)
+
+    if verbose:
+        logger.info(
+            '# Clusters: %d | AIC: %.4f | BIC: %.4f | '
+            'Silhouette Score: %.4f',
+            n_components, aic, bic, sil
+        )
+
+    return n_components, aic, bic, sil
+
 
 
 def find_n_clusters(
@@ -28,32 +84,22 @@ def find_n_clusters(
     :type plot_path: Path
     """
 
-    scores_AIC = np.zeros(n_components[1] - n_components[0], dtype=np.float32)
-    scores_BIC = np.zeros(n_components[1] - n_components[0], dtype=np.float32)
-    scores_sil = np.zeros(n_components[1] - n_components[0], dtype=np.float32)
     n_components = np.arange(*n_components)
+    # Run clustering with different n_components
+    results = Parallel(n_jobs=-1)(
+        delayed(compute_scores)(X, n, random_state, verbose)
+        for n in n_components
+    )
 
-    for i, n in enumerate(n_components):
-        # Run GaussianMixture
-        gmm = GaussianMixture(
-            n_components=n,
-            random_state=random_state,
-        )
-        gmm.fit(X)
-        clusters = gmm.predict(X)
-
-        # Extract scores
-        scores_AIC[i] = gmm.aic(X)
-        scores_BIC[i] = gmm.bic(X)
-        scores_sil[i] = silhouette_score(X, clusters)
-
-        if verbose:
-            print(
-                f'# Clusters: {n} | '
-                f'AIC: {scores_AIC[i]:.4f} | '
-                f'BIC: {scores_BIC[i]:.4f} | '
-                f'Silhouette Score: {scores_sil[i]:.4f}'
-            )
+    # Save results
+    scores_AIC = np.zeros(n_components.shape[0], dtype=np.float32)
+    scores_BIC = np.zeros(n_components.shape[0], dtype=np.float32)
+    scores_sil = np.zeros(n_components.shape[0], dtype=np.float32)
+    for i, (n, aic, bic, sil) in enumerate(results):
+        print(n)
+        scores_AIC[i] = aic
+        scores_BIC[i] = bic
+        scores_sil[i] = sil
 
     # Plot metrics
     _, ax = plt.subplots(1, 1, figsize=(12, 8))
@@ -96,9 +142,17 @@ def clustering(
     :return: clusters
     :rtype: numpy.ndarray
     """
+    logger.info(
+        'GMM for %d components started',
+        n_components
+    )
+
     gmm = GaussianMixture(
         n_components=n_components,
         random_state=random_state,
     )
     gmm.fit(X)
+
+    logger.info('GMM completed')
+
     return gmm.predict(X)
