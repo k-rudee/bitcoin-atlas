@@ -3,13 +3,14 @@ import numpy as np
 from bitcoin_app.data_load import load_dataset
 from bitcoin_app.data_processing import data_processing
 from bitcoin_app.clustering import find_n_clusters, clustering
+from bitcoin_app.save_dataset import save_dataset
 from bitcoin_app.settings import Settings
 
 if __name__ == "__main__":
 
     settings = Settings()
 
-    idx, X = load_dataset(
+    idx, X, df = load_dataset(
         path=settings.dataset.dataset_path,
         dtype=settings.dataset.dtype,
         drop_na=settings.dataset.drop_na,
@@ -32,42 +33,16 @@ if __name__ == "__main__":
         )
     # Run clustering
     else:
-        clusters = clustering(
+        clusters, clusters_proba = clustering(
             X=X_pca,
             n_components=settings.clustering.n_components,
             random_state=settings.clustering.random_state,
         )
-        clusters_count = np.unique(clusters, return_counts=True)
 
-        print(f'{clusters.shape=}')
-        print(f'Clusters: {clusters_count[0]}')
-        print(f'Cluster counts: {clusters_count[1]}')
-
-
-        # Plotly
-        import plotly.express as px
-        import pandas as pd
-
-        df = pd.DataFrame({
-            'PC1': X_pca[:, 0],
-            'PC2': X_pca[:, 1],
-            'PC3': X_pca[:, 2],
-            'Cluster': clusters
-        })
-
-        fig = px.scatter_3d(
-            df,
-            x='PC1',
-            y='PC2',
-            z='PC3',
-            color='Cluster',
-            symbol='Cluster',  # Optional: Different symbols for each cluster
-            opacity=0.8,
-            title='Interactive 3D Visualization of Clusters'
+        # Save dataset
+        save_dataset(
+            df=df,
+            X_pca=X_pca,
+            X_proba=clusters_proba,
+            path=settings.dataset.dataset_save_path,
         )
-
-        # Update marker size
-        fig.update_traces(marker=dict(size=5))
-
-        # Show the plot
-        fig.show()

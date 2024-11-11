@@ -49,4 +49,7 @@ def data_processing(
     logger.info('PCA Components: %s', pca.components_)
     logger.info('PCA Explained Variance: %s', pca.explained_variance_ratio_)
 
+    # Contiguous memory layout and convert samples to float32
+    X = np.ascontiguousarray(X, dtype='float32')
+
     return scaler, pca, X

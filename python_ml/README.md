@@ -8,4 +8,4 @@
 - Export environment:
   `conda env export > environment.yml`
 - Run the application:
-  `python -m bitcoin_app.bitcoin`
+  `python -m bitcoin_app.bitcoin` 

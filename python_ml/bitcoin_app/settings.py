@@ -11,6 +11,7 @@ class DatasetSettings(BaseSettings):
     """Dataset Load settings"""
     dataset_folder: str = 'dataset'
     dataset_file: str = 'entity_features_final.csv' # "entity_features_small.csv" entity_features_final
+    dataset_save_file: str = 'dataset_pca_clusters.csv'
     drop_na: bool = True
     cols: list = [
         "ENTITY_ID", "TOTAL_RECIEVE_ADDRESSES", "TOTAL_RECIEVE_TRANSACTIONS",
@@ -32,6 +33,11 @@ class DatasetSettings(BaseSettings):
         """Returns the path to the dataset file."""
         return module_root / ".." / self.dataset_folder / self.dataset_file
 
+    @property
+    def dataset_save_path(self) -> Path:
+        """Returns the path to the dataset file."""
+        return module_root / ".." / self.dataset_folder / self.dataset_save_file
+
 
 class PreprocessingSettings(BaseSettings):
     """Dataset Preprocessing settings."""
@@ -41,7 +47,7 @@ class PreprocessingSettings(BaseSettings):
 
 class FindClustersSettings(BaseSettings):
     """Settings for the search of the optimal number of the clusters."""
-    n_components: tuple[int, int] = 2, 30
+    n_components: tuple[int, int] = 3, 30
     random_state: int = 0
     verbose: bool = True
     plot_filename: str = 'clusters_AIC_BIC_Sil.png'
@@ -54,7 +60,7 @@ class FindClustersSettings(BaseSettings):
 
 class ClusteringSettings(BaseSettings):
     """"Clustering Settings."""
-    n_components: int = 17
+    n_components: int = 27
     random_state: int = 0
 
 
@@ -65,4 +71,4 @@ class Settings(BaseSettings):
     find_clusters: FindClustersSettings = FindClustersSettings()
     clustering: ClusteringSettings = ClusteringSettings()
 
-    find_clustering: bool = True
+    find_clustering: bool = False

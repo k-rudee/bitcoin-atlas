@@ -6,13 +6,14 @@ from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.mixture import GaussianMixture
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, pairwise_distances
 
 from bitcoin_app.logging_config import logger_config
 
 
 logger = logging.getLogger(__name__)
 logger_config(logger)
+
 
 def compute_scores(
         X: np.ndarray,
@@ -21,6 +22,7 @@ def compute_scores(
         verbose: bool,
 ) -> tuple[int, float, float, float]:
     """Compute AIC, BIC, Silhouette scores  for given number of clusters.
+
 
     :param X: dataset
     :type X: numpy.ndarray
@@ -43,14 +45,44 @@ def compute_scores(
     gmm = GaussianMixture(
         n_components=n_components,
         random_state=random_state,
+        # covariance_type='diag',
+        init_params='kmeans',
+        tol=1e-3,
+        max_iter=100,
+        verbose=verbose,
+        verbose_interval=1,
     )
     gmm.fit(X)
+
+    if verbose:
+        logger.info(
+            'GMM for %d components has been fitted.',
+            n_components
+        )
+
     clusters = gmm.predict(X)
+
+    if verbose:
+        clusters_count = np.unique(clusters, return_counts=True)
+        logger.info(
+            'Clusters for %d components: %s',
+            n_components, clusters_count[0],
+        )
+        logger.info(
+            'Clusters for %d components counts: %s',
+            n_components, clusters_count[1],
+        )
 
     # Extract scores
     aic = gmm.aic(X)
     bic = gmm.bic(X)
-    sil = silhouette_score(X, clusters)
+    sil = silhouette_score(
+        X,
+        labels=clusters,
+        metric='euclidean',     # 'manhattan', 'euclidean',
+        sample_size=100000,
+        random_state=random_state,
+    )
 
     if verbose:
         logger.info(
@@ -96,7 +128,6 @@ def find_n_clusters(
     scores_BIC = np.zeros(n_components.shape[0], dtype=np.float32)
     scores_sil = np.zeros(n_components.shape[0], dtype=np.float32)
     for i, (n, aic, bic, sil) in enumerate(results):
-        print(n)
         scores_AIC[i] = aic
         scores_BIC[i] = bic
         scores_sil[i] = sil
@@ -129,7 +160,7 @@ def clustering(
         X: np.ndarray,
         n_components: int,
         random_state: int,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     """Clustering based on GaussianMixture.
 
     :param X: dataset
@@ -139,7 +170,7 @@ def clustering(
     :param random_state: random state for the GaussianMixture.
     :type random_state: int
 
-    :return: clusters
+    :return: clusters and prob distribution
     :rtype: numpy.ndarray
     """
     logger.info(
@@ -150,9 +181,27 @@ def clustering(
     gmm = GaussianMixture(
         n_components=n_components,
         random_state=random_state,
+        init_params='kmeans',
+        tol=1e-3,
+        max_iter=100,
+        verbose=True,
+        verbose_interval=1,
     )
     gmm.fit(X)
+    logger.info('GMM fitted')
 
-    logger.info('GMM completed')
+    clusters = gmm.predict(X)
+    clusters_proba = gmm.predict_proba(X)
+    # print(clusters_prob.shape)
 
-    return gmm.predict(X)
+    clusters_count = np.unique(clusters, return_counts=True)
+    logger.info(
+        'Clusters for %d components: %s',
+        n_components, clusters_count[0],
+    )
+    logger.info(
+        'Clusters for %d components counts: %s',
+        n_components, clusters_count[1],
+    )
+
+    return clusters, clusters_proba

@@ -44,6 +44,7 @@ def load_dataset(
             how='any',
             inplace=True,
         )
+        df.reset_index(drop=True, inplace=True)
 
         logger.info('NA values has been dropped. DF shape: %s', df.shape)
 
@@ -56,4 +57,4 @@ def load_dataset(
         idx.shape, X.shape,
     )
 
-    return idx, X
+    return idx, X, df
