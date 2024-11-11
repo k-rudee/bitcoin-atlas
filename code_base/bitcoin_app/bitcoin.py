@@ -1,7 +1,8 @@
 """Class project for CSE 6242."""
-
+import numpy as np
 from bitcoin_app.data_load import load_dataset
 from bitcoin_app.data_processing import data_processing
+from bitcoin_app.clustering import find_n_clusters, clustering
 from bitcoin_app.settings import Settings
 
 if __name__ == "__main__":
@@ -20,9 +21,53 @@ if __name__ == "__main__":
         pca_random_state=settings.preprocessing.pca_random_state,
     )
 
-    print(f'PCA Components: {pca.components_}')
-    print(f'PCA Explained Variance: {pca.explained_variance_ratio_=}')
+    # Find the optimal number of clusters
+    if settings.find_clustering:
+        find_n_clusters(
+            X=X_pca,
+            n_components=settings.find_clusters.n_components,
+            random_state=settings.find_clusters.random_state,
+            verbose=settings.find_clusters.verbose,
+            plot_path=settings.find_clusters.plot_path,
+        )
+    # Run clustering
+    else:
+        clusters = clustering(
+            X=X_pca,
+            n_components=settings.clustering.n_components,
+            random_state=settings.clustering.random_state,
+        )
+        clusters_count = np.unique(clusters, return_counts=True)
 
-    print(idx.shape)
-    print(X.shape)
-    print(X_pca.shape)
+        print(f'{clusters.shape=}')
+        print(f'Clusters: {clusters_count[0]}')
+        print(f'Cluster counts: {clusters_count[1]}')
+
+
+        # Plotly
+        import plotly.express as px
+        import pandas as pd
+
+        df = pd.DataFrame({
+            'PC1': X_pca[:, 0],
+            'PC2': X_pca[:, 1],
+            'PC3': X_pca[:, 2],
+            'Cluster': clusters
+        })
+
+        fig = px.scatter_3d(
+            df,
+            x='PC1',
+            y='PC2',
+            z='PC3',
+            color='Cluster',
+            symbol='Cluster',  # Optional: Different symbols for each cluster
+            opacity=0.8,
+            title='Interactive 3D Visualization of Clusters'
+        )
+
+        # Update marker size
+        fig.update_traces(marker=dict(size=5))
+
+        # Show the plot
+        fig.show()

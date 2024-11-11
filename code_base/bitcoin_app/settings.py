@@ -10,7 +10,7 @@ from bitcoin_app import module_root
 class DatasetSettings(BaseSettings):
     """Dataset Load settings"""
     dataset_folder: str = 'dataset'
-    dataset_file: str = "entity_features_small.csv"
+    dataset_file: str = 'entity_features_final.csv' # "entity_features_small.csv" entity_features_final
     drop_na: bool = True
     cols: list = [
         "ENTITY_ID", "TOTAL_RECIEVE_ADDRESSES", "TOTAL_RECIEVE_TRANSACTIONS",
@@ -39,7 +39,30 @@ class PreprocessingSettings(BaseSettings):
     pca_random_state: int = 0
 
 
+class FindClustersSettings(BaseSettings):
+    """Settings for the search of the optimal number of the clusters."""
+    n_components: tuple[int, int] = 2, 30
+    random_state: int = 0
+    verbose: bool = True
+    plot_filename: str = 'clusters_AIC_BIC_Sil.png'
+
+    @property
+    def plot_path(self) -> Path:
+        """Returns the path to the clustering plot."""
+        return module_root / ".." / self.plot_filename
+
+
+class ClusteringSettings(BaseSettings):
+    """"Clustering Settings."""
+    n_components: int = 17
+    random_state: int = 0
+
+
 class Settings(BaseSettings):
     """Application settings"""
     dataset: DatasetSettings = DatasetSettings()
     preprocessing: PreprocessingSettings = PreprocessingSettings()
+    find_clusters: FindClustersSettings = FindClustersSettings()
+    clustering: ClusteringSettings = ClusteringSettings()
+
+    find_clustering: bool = True
