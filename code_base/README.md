@@ -7,3 +7,5 @@
   `conda activate cse6242_project`
 - Export environment:
   `conda env export > environment.yml`
+- Run the application:
+  `python -m bitcoin_app.bitcoin`
