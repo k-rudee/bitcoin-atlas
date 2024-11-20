@@ -158,7 +158,7 @@ For example:
 
 
 
-## Clusterization
+# Clusterization
 The provided Python script determines the optimal number of clusters and 
 prepares the dataset for visualization. Follow the steps below to set up and 
 run the script:
@@ -192,4 +192,4 @@ run the script:
    python -m bitcoin_app.bitcoin
    ```  
 
-## Data visualization 
+# Data visualization 
