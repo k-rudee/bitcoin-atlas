@@ -60,7 +60,7 @@ class FindClustersSettings(BaseSettings):
 
 class ClusteringSettings(BaseSettings):
     """"Clustering Settings."""
-    n_components: int = 27
+    n_components: int = 12
     random_state: int = 0
 
 
