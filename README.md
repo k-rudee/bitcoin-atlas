@@ -4,10 +4,82 @@ Class project for CSE 6242
 
 
 
-# HOW TO RUN
-## ETL
+# ETL
+This repository organizes and processes Bitcoin blockchain data within Snowflake. The ETL pipeline follows a sequential structure, where each directory and script must be executed in order. The final output, `F_input_address_pairs.sql`, is consumed by the Scala entity mapping code.
 
-## Scala 
+## Structure Overview
+
+### Directory and Script Sequence
+1. **0_stnd**: Standardizes raw blockchain data.
+   - `stnd_blocks.sql`: Standardizes block data.
+   - `stnd_txins.sql`: Standardizes transaction input data.
+   - `stnd_txouts.sql`: Standardizes transaction output data.
+   - `stnd_txs.sql`: Standardizes transaction data.
+
+2. **1_core**: Processes core features of the blockchain.
+   - `bitcoin.sql`: Processes fundamental Bitcoin data.
+   - `core_txouts.sql`: Processes transaction outputs.
+   - **public_keys**:
+     - `core_drop_new_public_keys.sql`: Drops temporary public key tables.
+     - `core_new_public_keys.sql`: Identifies new public keys.
+     - `core_public_keys_insert_records.sql`: Inserts new public key records.
+     - `core_public_keys.sql`: Maintains the complete public key table.
+
+3. **1_work**: Additional exploratory features (not currently used).
+   - `fees_per_block.sql`: Calculates transaction fees per block.
+   - `time_between_blocks.sql`: Measures time intervals between blocks.
+
+4. **2_base**: Constructs base tables and contextual data.
+   - `A_blocks_since_halving.sql`: Aggregates block data since the last halving.
+   - `B_txs_since_halving.sql`: Aggregates transaction data since the last halving.
+   - `C_txins_since_halving.sql`: Aggregates transaction input data since the last halving.
+   - `C_txouts_since_halving.sql`: Aggregates transaction output data since the last halving.
+   - `D_txins.sql`: Processes all transaction input data.
+   - `D_txouts_context.sql`: Adds context to transaction outputs.
+   - `D_txs_context.sql`: Adds context to transactions.
+   - `E_blocks_context.sql`: Adds context to blocks.
+   - `E_txouts.sql`: Processes final transaction outputs.
+   - `E_txs.sql`: Processes final transactions.
+   - `F_blocks.sql`: Processes final block data.
+   - `F_input_address_pairs.sql`: Generates the final dataset consumed by the Scala entity mapper.
+
+### Dependencies
+- Scripts within each subfolder depend on prior scripts in numerical and alphabetical order (e.g., `0_stnd` must run before `1_core`; `A_` must run before `B_` within `2_base`).
+
+## Running the ETL Pipeline
+
+1. **Configure Snowflake Connection**:
+   Set up your Snowflake connection settings within your environment or preferred query tool.
+
+2. **Run Scripts in Order**:
+   Execute scripts in their respective order, starting from `0_stnd` and progressing to `2_base`. For example:
+   - Navigate to `sql/0_stnd` and run:
+     ```sql
+     -- Example: Run stnd_blocks.sql
+     SOURCE stnd_blocks.sql;
+     ```
+   - Proceed sequentially through all directories and scripts.
+
+3. **Verify Outputs**:
+   After running the scripts, verify that the final output table, `F_input_address_pairs`, is correctly populated:
+   ```sql
+   SELECT * FROM F_input_address_pairs;
+   ```
+
+## Notes on "Since Halving" Tables
+The `_since_halving.sql` tables (e.g., `A_blocks_since_halving.sql`) include approximately 2016 blocks (~two weeks of data starting at the last halving height of 840,000). These are exploratory features and are not currently used in downstream processes.
+
+## Example Output
+The `F_input_address_pairs` table contains transaction input pairs. Example:
+| tx_id     | public_key_uuid_1 | public_key_uuid_2 |
+|-----------|-------------------|-------------------|
+| tx12345   | uuid1             | uuid2             |
+| tx67890   | uuid3             | uuid4             |
+
+For additional details or troubleshooting, consult the team or Snowflake documentation.
+
+
+# Scala 
 This project utilizes Spark and GraphX to perform entity mapping based on transaction input pairs. The `FastEntityMapper.scala` script reads transaction data from Snowflake, builds a graph of co-occurring public keys, computes connected components, and writes the resulting entity mapping back to Snowflake. Follow the steps below to set up and execute the script.
 
 ## Prerequisites
