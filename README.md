@@ -272,7 +272,7 @@ Built with React, D3.js, and Three.js, the frontend provides interactive 2D and 
 + Transaction size distribution (Histogram)
 
 4. StatisticsPanel.jsx
-5. 
+  
 + Displays key dataset metrics
 + Provides summary statistics cards
 
