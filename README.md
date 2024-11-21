@@ -192,26 +192,18 @@ run the script:
    python -m bitcoin_app.bitcoin
    ```  
 
-# Data visualization 
+# Data Visualization
 
 The data visualization component consists of a FastAPI backend for data processing and a React frontend for interactive visualization of Bitcoin entity clusters.
 
-Backend
+## Backend
 
-Overview: Built with FastAPI and SQLite, the backend facilitates dimensional analysis of Bitcoin entities through PCA and clustering techniques.
+## Overview
 
-backend/
-├── app/
-│   ├── main.py           # FastAPI application and endpoints
-│   ├── models.py         # SQLAlchemy models
-│   ├── database.py       # Database connection handling
-│   ├── import_data.py    # Data ingestion script
-│   ├── requirements.txt  # Dependencies
-│   └── .env             # Environment variables
-└── data/
-    └── dataset_pca_cluster.csv  # Entity clustering dataset
+Built with FastAPI and SQLite, the backend facilitates dimensional analysis of Bitcoin entities through PCA and clustering techniques.
 
-Setup and Installation
+
+## Setup and Installation
 
 1. Create and activate virtual environment
  ```bash
@@ -232,7 +224,7 @@ Setup and Installation
    ```
 
 
-API Endpoints
+## API Endpoints
 
 1. GET /api/cluster-data
 
@@ -254,29 +246,11 @@ entity_id (int): Unique identifier for Bitcoin entity
 Response: Entity details including transaction metrics and cluster memberships
 
 
-Frontend
+## Frontend
 
-Overview: Built with React, D3.js, and Three.js, the frontend provides interactive 2D and 3D visualizations of entity clustering results.
+## Overview Built with React, D3.js, and Three.js, the frontend provides interactive 2D and 3D visualizations of entity clustering results.
 
-Directory Structure: 
-
-frontend/
-├── public/
-│   └── data/
-│       └── entity2.csv            # Data file for network statistics
-├── src/
-│   ├── components/
-│   │   ├── Clustering3D.jsx       # 3D clustering visualization
-│   │   ├── StatAnalysisChart.jsx  # Statistical analysis charts
-│   │   └── StatisticsPanel.jsx    # Key statistical summaries
-│   ├── App.jsx                    # Main application component
-│   ├── index.css                  # Global CSS styles
-│   ├── index.js                   # React entry point
-│   └── utils.js                   # Utility functions 
-├── package.json                   # Dependencies and scripts
-└── README.md                      # Documentation
-
-Key Components
+## Key Components
 
 1. App.jsx (Main Application)
 
@@ -305,7 +279,7 @@ Displays key dataset metrics
 Provides summary statistics cards
 
 
-Setup and Installation
+## Setup and Installation
 
 1. Install dependencies:
    ```bash
