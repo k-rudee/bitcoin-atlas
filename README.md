@@ -248,35 +248,37 @@ Response: Entity details including transaction metrics and cluster memberships
 
 ## Frontend
 
-## Overview Built with React, D3.js, and Three.js, the frontend provides interactive 2D and 3D visualizations of entity clustering results.
+## Overview 
+
+Built with React, D3.js, and Three.js, the frontend provides interactive 2D and 3D visualizations of entity clustering results.
 
 ## Key Components
 
-1. App.jsx (Main Application)
+1. App.jsx 
 
-Manages data loading and processing
-Handles tab navigation between analysis views
-Controls global styling and theme settings
++ Manages data loading and processing
++ Handles tab navigation between analysis views
++ Controls global styling and theme settings
 
-2. Clustering3D.jsx (3D Visualization)
+2. Clustering3D.jsx 
 
 Features:
 
-Interactive 3D point cloud visualization
-Real-time entity search and highlighting
-Adjustable sample size controls
++ Interactive 3D point cloud visualization
++ Real-time entity search and highlighting
++ Adjustable sample size controls
 
 3. StatAnalysisChart.jsx 
 
 Visualizations:
 
-Entity type distribution (Pie Chart)
-Transaction size distribution (Histogram)
++ Entity type distribution (Pie Chart)
++ Transaction size distribution (Histogram)
 
 4. StatisticsPanel.jsx 
 
-Displays key dataset metrics
-Provides summary statistics cards
++ Displays key dataset metrics
++ Provides summary statistics cards
 
 
 ## Setup and Installation
