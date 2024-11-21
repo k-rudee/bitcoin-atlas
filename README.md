@@ -193,3 +193,134 @@ run the script:
    ```  
 
 # Data visualization 
+
+The data visualization component consists of a FastAPI backend for data processing and a React frontend for interactive visualization of Bitcoin entity clusters.
+
+Backend
+
+Overview: Built with FastAPI and SQLite, the backend facilitates dimensional analysis of Bitcoin entities through PCA and clustering techniques.
+
+backend/
+├── app/
+│   ├── main.py           # FastAPI application and endpoints
+│   ├── models.py         # SQLAlchemy models
+│   ├── database.py       # Database connection handling
+│   ├── import_data.py    # Data ingestion script
+│   ├── requirements.txt  # Dependencies
+│   └── .env             # Environment variables
+└── data/
+    └── dataset_pca_cluster.csv  # Entity clustering dataset
+
+Setup and Installation
+
+1. Create and activate virtual environment
+ ```bash
+   python -m venv btc
+   source btc/Scripts/activate
+   ```
+2. Install Dependencies
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Import Data
+   ```bash
+   python import_data.py
+   ```
+6. Start Server
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+
+API Endpoints
+
+1. GET /api/cluster-data
+
+Returns sampled cluster data for 3D visualization
+Query Parameters:
+
+sample_size (int, default=1000): Number of entities to return
+
+Response: Array of entities with PCA coordinates and cluster probabilities
+
+
+2. GET /api/entity/{entity_id}
+
+Returns detailed data for a specific entity
+Path Parameters:
+
+entity_id (int): Unique identifier for Bitcoin entity
+
+Response: Entity details including transaction metrics and cluster memberships
+
+
+Frontend
+
+Overview: Built with React, D3.js, and Three.js, the frontend provides interactive 2D and 3D visualizations of entity clustering results.
+
+Directory Structure: 
+
+frontend/
+├── public/
+│   └── data/
+│       └── entity2.csv            # Data file for network statistics
+├── src/
+│   ├── components/
+│   │   ├── Clustering3D.jsx       # 3D clustering visualization
+│   │   ├── StatAnalysisChart.jsx  # Statistical analysis charts
+│   │   └── StatisticsPanel.jsx    # Key statistical summaries
+│   ├── App.jsx                    # Main application component
+│   ├── index.css                  # Global CSS styles
+│   ├── index.js                   # React entry point
+│   └── utils.js                   # Utility functions 
+├── package.json                   # Dependencies and scripts
+└── README.md                      # Documentation
+
+Key Components
+
+1. App.jsx (Main Application)
+
+Manages data loading and processing
+Handles tab navigation between analysis views
+Controls global styling and theme settings
+
+2. Clustering3D.jsx (3D Visualization)
+
+Features:
+
+Interactive 3D point cloud visualization
+Real-time entity search and highlighting
+Adjustable sample size controls
+
+3. StatAnalysisChart.jsx 
+
+Visualizations:
+
+Entity type distribution (Pie Chart)
+Transaction size distribution (Histogram)
+
+4. StatisticsPanel.jsx 
+
+Displays key dataset metrics
+Provides summary statistics cards
+
+
+Setup and Installation
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Access application: Open browser and navigate to the localhost address shown in terminal
+
+
+
+    
+
+
