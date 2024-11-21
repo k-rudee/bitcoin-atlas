@@ -187,3 +187,12 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+
+# Add to .gitignore
+
+viz/dash/frontend/public/data/entity_features_final.csv
+viz/dash/backend/app/bitcoin_clusters.db
+viz/dash/backend/data/dataset_pca_cluster.csv
+viz/dash/backend/data/dataset_pca_clusters_new.csv
+

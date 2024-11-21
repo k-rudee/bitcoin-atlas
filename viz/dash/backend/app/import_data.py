@@ -63,7 +63,7 @@ def insert_records(conn, df, batch_size=100):
     insert_sql = f"INSERT INTO entity_clusters ({','.join(columns)}) VALUES ({placeholders})"
     
     # Convert DataFrame to list of tuples for faster processing
-    records = df.values.tolist()  # Changed from to_records to values.tolist()
+    records = df.values.tolist()  
     
     # Process in small batches
     for i in range(0, len(records), batch_size):
