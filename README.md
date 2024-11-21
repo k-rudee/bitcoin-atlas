@@ -254,15 +254,13 @@ Built with React, D3.js, and Three.js, the frontend provides interactive 2D and 
 
 ## Key Components
 
-1. App.jsx 
-
+1. App.jsx
+   
 + Manages data loading and processing
 + Handles tab navigation between analysis views
 + Controls global styling and theme settings
 
 2. Clustering3D.jsx 
-
-Features:
 
 + Interactive 3D point cloud visualization
 + Real-time entity search and highlighting
@@ -270,13 +268,11 @@ Features:
 
 3. StatAnalysisChart.jsx 
 
-Visualizations:
-
 + Entity type distribution (Pie Chart)
 + Transaction size distribution (Histogram)
 
-4. StatisticsPanel.jsx 
-
+4. StatisticsPanel.jsx
+5. 
 + Displays key dataset metrics
 + Provides summary statistics cards
 
