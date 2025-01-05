@@ -1,0 +1,12 @@
+{
+  "outputDirectory": "viz/dash/frontend/dist",
+  "buildCommand": "cd viz/dash/frontend && npm install && npm run build",
+  "installCommand": "cd viz/dash/frontend && npm install",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

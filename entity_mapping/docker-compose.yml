@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  spark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spark-container
+    environment:
+      # Environment variables loaded from .env for security
+      - SNOWFLAKE_USER=${SNOWFLAKE_USER}
+      - SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD}
+      - SNOWFLAKE_URL=${SNOWFLAKE_URL}
+      - SNOWFLAKE_WAREHOUSE=${SNOWFLAKE_WAREHOUSE}
+      - SNOWFLAKE_ROLE=${SNOWFLAKE_ROLE}
+    volumes:
+      # Mounts for application JARs and checkpoint directory
+      - ./target/scala-2.12:/app                      # Mount application code
+      - ./checkpoint:/tmp/spark-checkpoint     # Checkpoint directory for Spark
+    deploy:
+      resources:
+        limits:
+          memory: 350g         # Limit container to 350 GB of memory
+          cpus: "10.0"         # Limit to 10 CPU cores
+    entrypoint: ["/opt/bitnami/spark/bin/spark-submit"]
+

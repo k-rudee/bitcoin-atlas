@@ -1,0 +1,231 @@
+WITH RECURSIVE 
+-- Build transaction chains to identify related addresses 
+TRANSACTION_CHAINS AS (
+   -- Initial transaction relationships
+   SELECT 
+       t1.TX_ID as start_tx,
+       t1.TX_ID as current_tx,
+       t1.PREVOUT_TX_ID as prev_tx,
+       t1.TX_N as input_index,
+       o.PUBLIC_KEY_UUID,
+       o.AMOUNT_BTC,
+       o.IS_SPENT,
+       tx.BLOCK_ID,
+       b.TIME_UTC,
+       1 as chain_length
+   FROM GT_SHARED_SANDBOX.SHARED_SANDBOX.TXINS_2 t1
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXOUTS_2 o 
+       ON t1.TX_ID = o.TX_ID
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXS_2 tx
+       ON tx.TX_ID = t1.TX_ID
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.BLOCKS_2 b
+       ON b.BLOCK_ID = tx.BLOCK_ID
+   WHERE t1.PREVOUT_TX_ID != -1  -- Exclude coinbase transactions
+
+   UNION ALL
+
+   -- Recursive case: Follow transaction chains
+   SELECT 
+       tc.start_tx,
+       t2.TX_ID as current_tx,
+       t2.PREVOUT_TX_ID as prev_tx,
+       t2.TX_N as input_index,
+       o2.PUBLIC_KEY_UUID,
+       o2.AMOUNT_BTC,
+       o2.IS_SPENT,
+       tx.BLOCK_ID,
+       b.TIME_UTC,
+       tc.chain_length + 1
+   FROM TRANSACTION_CHAINS tc
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXINS_2 t2 
+       ON tc.prev_tx = t2.TX_ID
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXOUTS_2 o2 
+       ON t2.TX_ID = o2.TX_ID
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXS_2 tx
+       ON tx.TX_ID = t2.TX_ID
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.BLOCKS_2 b
+       ON b.BLOCK_ID = tx.BLOCK_ID
+   WHERE t2.PREVOUT_TX_ID != -1
+   AND tc.chain_length < 2  -- Limit recursion depth
+),
+
+-- Calculate core features for entity-address pairs
+ENTITY_FEATURES AS (
+   SELECT 
+       MIN(tc.start_tx) as entity_id,
+       tc.PUBLIC_KEY_UUID as address,
+       
+       -- Basic transaction counts and chain info
+       COUNT(DISTINCT tc.current_tx) as num_transactions,
+       MAX(tc.chain_length) as chain_depth,
+       COUNT(DISTINCT tc.input_index) as unique_input_positions,
+       
+       -- Volume metrics for clustering
+       SUM(tc.AMOUNT_BTC) as total_volume,
+       AVG(tc.AMOUNT_BTC) as avg_transaction_size,
+       MAX(tc.AMOUNT_BTC) as max_transaction_size,
+       MIN(tc.AMOUNT_BTC) as min_transaction_size,
+       STDDEV(tc.AMOUNT_BTC) as std_transaction_size,
+       PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY tc.AMOUNT_BTC) as median_tx_size,
+       VAR_POP(tc.AMOUNT_BTC) as tx_size_variance,
+       
+       -- Network activity patterns
+       COUNT(DISTINCT tc.prev_tx) as unique_inputs,
+       COUNT(DISTINCT o2.TX_ID) as unique_outputs,
+       COUNT(DISTINCT tc.BLOCK_ID) as blocks_involved,
+       
+       -- Balance analysis
+       SUM(CASE WHEN NOT tc.IS_SPENT THEN tc.AMOUNT_BTC ELSE 0 END) as current_balance,
+       SUM(CASE WHEN tc.IS_SPENT THEN tc.AMOUNT_BTC ELSE 0 END) as spent_amount,
+       
+       -- Activity ratios for behavior analysis
+       COUNT(CASE WHEN tc.IS_SPENT THEN 1 END)::FLOAT / NULLIF(COUNT(*), 0) as spent_ratio,
+       COUNT(DISTINCT tc.prev_tx)::FLOAT / NULLIF(COUNT(DISTINCT o2.TX_ID), 0) as io_ratio,
+       
+       -- Advanced metrics for entity classification
+       COUNT(DISTINCT tc.BLOCK_ID)::FLOAT / 
+           NULLIF(DATEDIFF('second', MIN(tc.TIME_UTC), MAX(tc.TIME_UTC)), 0) as activity_density,
+       SUM(tc.AMOUNT_BTC) / NULLIF(COUNT(DISTINCT tc.current_tx), 0) as avg_value_per_tx
+   FROM TRANSACTION_CHAINS tc
+   LEFT JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXOUTS_2 o2 
+       ON tc.current_tx = o2.TX_ID
+   GROUP BY tc.PUBLIC_KEY_UUID
+),
+
+-- Analyze behavioral patterns
+BEHAVIORAL_PATTERNS AS (
+   SELECT 
+       start_tx as entity_id,
+       COUNT(CASE WHEN EXTRACT(HOUR FROM TIME_UTC) BETWEEN 9 AND 17 THEN 1 END) as business_hours_txs,
+       COUNT(CASE WHEN AMOUNT_BTC > 100 THEN 1 END)::FLOAT / NULLIF(COUNT(*), 0) as large_tx_ratio,
+       COUNT(CASE WHEN AMOUNT_BTC < 0.1 THEN 1 END)::FLOAT / NULLIF(COUNT(*), 0) as micro_tx_ratio,
+       COUNT(DISTINCT PUBLIC_KEY_UUID) / NULLIF(COUNT(*), 0) as address_reuse_ratio
+   FROM TRANSACTION_CHAINS
+   GROUP BY start_tx
+),
+
+-- Calculate velocity metrics
+VELOCITY_METRICS AS (
+   SELECT 
+       start_tx as entity_id,
+       MAX(transactions_per_hour) as peak_tx_rate,
+       AVG(transactions_per_hour) as avg_tx_rate,
+       MAX(volume_per_hour) as peak_volume_rate,
+       AVG(volume_per_hour) as avg_volume_rate
+   FROM (
+       SELECT 
+           start_tx,
+           DATE_TRUNC('hour', TIME_UTC) as hour,
+           COUNT(*) as transactions_per_hour,
+           SUM(AMOUNT_BTC) as volume_per_hour
+       FROM TRANSACTION_CHAINS
+       GROUP BY start_tx, DATE_TRUNC('hour', TIME_UTC)
+   )
+   GROUP BY start_tx
+),
+
+-- Analyze entity relationships
+ENTITY_RELATIONSHIPS AS (
+   SELECT 
+       e1.entity_id as source_entity,
+       e2.entity_id as target_entity,
+       COUNT(DISTINCT t.TX_ID) as interaction_count,
+       SUM(o.AMOUNT_BTC) as flow_amount,
+       AVG(o.AMOUNT_BTC) as avg_flow_size
+   FROM ENTITY_FEATURES e1
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXOUTS_2 o 
+       ON e1.address = o.PUBLIC_KEY_UUID
+   JOIN GT_SHARED_SANDBOX.SHARED_SANDBOX.TXINS_2 t
+       ON o.TX_ID = t.PREVOUT_TX_ID
+   JOIN ENTITY_FEATURES e2
+       ON t.TX_ID = e2.entity_id
+   GROUP BY e1.entity_id, e2.entity_id
+)
+
+-- Final Output
+SELECT 
+    f.entity_id,
+    f.address,
+    f.num_transactions,
+    f.chain_depth,
+    f.unique_input_positions,
+    f.total_volume,
+    f.avg_transaction_size,
+    f.max_transaction_size,
+    f.min_transaction_size,
+    f.std_transaction_size,
+    f.median_tx_size,
+    f.tx_size_variance,
+    f.unique_inputs,
+    f.unique_outputs,
+    f.blocks_involved,
+    f.current_balance,
+    f.spent_amount,
+    f.spent_ratio,
+    f.io_ratio,
+    f.activity_density,
+    f.avg_value_per_tx,
+    
+    -- Network metrics 
+    COUNT(DISTINCT r.target_entity) as out_degree,
+    COUNT(DISTINCT r2.source_entity) as in_degree,
+    SUM(r.flow_amount) as total_outflow,
+    SUM(r2.flow_amount) as total_inflow,
+    
+    -- Behavioral features
+    b.business_hours_txs,
+    b.large_tx_ratio,
+    b.micro_tx_ratio,
+    b.address_reuse_ratio,
+    
+    -- Activity patterns
+    v.peak_tx_rate,
+    v.avg_tx_rate,
+    v.peak_volume_rate,
+    v.avg_volume_rate,
+    
+    -- Entity classification
+    CASE 
+        WHEN v.peak_tx_rate > 10 AND b.address_reuse_ratio < 0.1 THEN 'Professional Service'
+        WHEN b.business_hours_txs > 0 AND f.avg_transaction_size > 10 THEN 'Business Entity'
+        WHEN f.num_transactions > 100 AND f.io_ratio > 0.8 THEN 'Exchange'
+        WHEN COUNT(DISTINCT r2.source_entity) < 3 AND f.avg_transaction_size > 50 THEN 'Mining Pool'
+        ELSE 'Individual'
+    END as entity_type
+
+FROM ENTITY_FEATURES f
+LEFT JOIN BEHAVIORAL_PATTERNS b ON f.entity_id = b.entity_id
+LEFT JOIN VELOCITY_METRICS v ON f.entity_id = v.entity_id
+LEFT JOIN ENTITY_RELATIONSHIPS r ON f.entity_id = r.source_entity
+LEFT JOIN ENTITY_RELATIONSHIPS r2 ON f.entity_id = r2.target_entity
+GROUP BY 
+    f.entity_id,
+    f.address,
+    f.num_transactions,
+    f.chain_depth,
+    f.unique_input_positions,
+    f.total_volume,
+    f.avg_transaction_size,
+    f.max_transaction_size,
+    f.min_transaction_size,
+    f.std_transaction_size,
+    f.median_tx_size,
+    f.tx_size_variance,
+    f.unique_inputs,
+    f.unique_outputs,
+    f.blocks_involved,
+    f.current_balance,
+    f.spent_amount,
+    f.spent_ratio,
+    f.io_ratio,
+    f.activity_density,
+    f.avg_value_per_tx,
+    b.business_hours_txs,
+    b.large_tx_ratio,
+    b.micro_tx_ratio,
+    b.address_reuse_ratio,
+    v.peak_tx_rate,
+    v.avg_tx_rate,
+    v.peak_volume_rate,
+    v.avg_volume_rate
+ORDER BY f.total_volume DESC;
